@@ -181,7 +181,7 @@ class SimpleNN():
                 labels = Y_train[batch*batch_size : (batch+1)*batch_size, :]
                 prediction = self.forward(inputs)
                 loss = self.criterion(labels, prediction)
-                self.backproapgation(inputs, lagitbels, prediction)
+                self.backproapgation(inputs, labels, prediction)
             if (epoch+1) % 500 == 0:
                 print(f'epoch: {epoch+1}/{n_epoch}, loss: {loss}')
                 # model.para()
@@ -215,7 +215,7 @@ def liner():
 
 if __name__ == '__main__':
 
-    #liner()
+    liner()
     #XOR_easy()
     pass
 
