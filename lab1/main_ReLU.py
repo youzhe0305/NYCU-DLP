@@ -46,6 +46,40 @@ def sigmoid_derivative(x, grad_Y):
     '''
     return grad_Y * sigmoid(x) * (1 - sigmoid(x))
 
+def ReLU(x):
+    '''
+    ReLU function, additional activation funciton
+    x.shape: batch_size * n
+    '''
+    return np.maximum(0,x)
+
+def ReLU_derivative(x, grad_Y):
+    '''
+    Derivative of d Loss / d x
+    formula: ReLu(x) 
+    x.shape: batch_size * n
+    grad_Y.shape: batch_size * n
+    ret.shape: batch_size * n
+    '''
+    return (x >= 0).astype(int) * grad_Y
+
+def Leakly_ReLU(x, alpha = 0.01):
+    '''
+    ReLU function, additional activation funciton
+    x.shape: batch_size * n
+    '''
+    return np.where(x>0, x, alpha * x)
+
+def Leakly_ReLU_derivative(x, grad_Y, alpha=0.01):
+    '''
+    Derivative of d Loss / d x
+    formula: Leakly_ReLu(x) 
+    x.shape: batch_size * n
+    grad_Y.shape: batch_size * n
+    ret.shape: batch_size * n
+    '''
+    return np.where(x>0, 1, alpha) * grad_Y
+
 def matrix_right_mul_W_derivative(X, grad_Y):
     '''
     Derivative of d Loss / d W
@@ -92,6 +126,7 @@ class SimpleNN():
         '''
         self.batch_size = batch_size
         self.lr = learning_rate
+        self.EPS = 1e-8
         
         self.W1 = np.random.uniform(0,1,(2,hidden_layer_size[0]))
         self.b1 = np.zeros(hidden_layer_size[0])
@@ -114,11 +149,11 @@ class SimpleNN():
             batch_size = self.batch_size
         # Layer 1
         self.Z1 = X@self.W1 + np.tile(self.b1, (batch_size, 1))
-        self.a1 = sigmoid(self.Z1)
+        self.a1 = ReLU(self.Z1)
 
         # Layer 2
         self.Z2 = self.a1@self.W2 + np.tile(self.b2, (batch_size, 1))
-        self.a2 = sigmoid(self.Z2)
+        self.a2 = ReLU(self.Z2)
 
         # Layer 3
         self.Z3 = self.a2@self.W3 + np.tile(self.b3, (batch_size, 1))
@@ -133,7 +168,7 @@ class SimpleNN():
             Use cross-entropy as loss function
             for y = sigma(y * ln(y_pred))
         '''
-        loss =  - (y_hat.T @ np.log(pred_y) + (1 - y_hat).T @ np.log(1 - pred_y)) / self.batch_size 
+        loss =  - (y_hat.T @ np.log(pred_y + self.EPS) + (1 - y_hat).T @ np.log(1 - pred_y + self.EPS)) / self.batch_size 
         return loss[0][0]
     
     def backproapgation(self, X, y_hat, pred_y):
@@ -142,7 +177,7 @@ class SimpleNN():
             grad_A_B mean the gradient of the A, denoated on the edge A-B
             same as d Loss / d A
         '''
-        grad_a3_yhat = - (y_hat / pred_y - (1 - y_hat) / (1 - pred_y)) # Loss: - (y_hat * np.log(pred_y) + (1 - y_hat) * np.log(1 - pred_y))
+        grad_a3_yhat = - (y_hat / (pred_y + self.EPS) - (1 - y_hat) / (1 - pred_y + self.EPS)) # Loss: - (y_hat * np.log(pred_y) + (1 - y_hat) * np.log(1 - pred_y))
         grad_Z3_a3 = sigmoid_derivative(self.Z3, grad_a3_yhat) # sigmoid(Z3)
         grad_a2_Z3_W3 = matrix_right_mul_W_derivative(self.a2, grad_Z3_a3) # XW + b, cacualte W
         grad_a2_Z3_b3 = matrix_plus_derivative(grad_Z3_a3, self.batch_size) # XW + b, cacualte b
@@ -151,15 +186,16 @@ class SimpleNN():
         self.W3 -= grad_a2_Z3_W3 * self.lr
         self.b3 -= grad_a2_Z3_b3 * self.lr
 
-        grad_Z2_a2 = sigmoid_derivative(self.Z2, grad_a2_Z3) # sigmoid(Z2)
+        grad_Z2_a2 = ReLU_derivative(self.Z2, grad_a2_Z3) # sigmoid(Z2)
         grad_a1_Z2_W2 = matrix_right_mul_W_derivative(self.a1, grad_Z2_a2) # a1*W2 + b2, cacualte W 
         grad_a1_Z2_b2 = matrix_plus_derivative(grad_Z2_a2, self.batch_size) # a1*W2 + b2, cacualte b
         grad_a1_Z2 = matrix_right_mul_X_derivative(self.W2, grad_Z2_a2) # a1*W2 + b2, cacualte X
 
+        # print(grad_a1_Z2_W2)
         self.W2 -= grad_a1_Z2_W2 * self.lr
         self.b2 -= grad_a1_Z2_b2 * self.lr
 
-        grad_Z1_a1 = sigmoid_derivative(self.Z1, grad_a1_Z2) # sigmoid(Z1)
+        grad_Z1_a1 = ReLU_derivative(self.Z1, grad_a1_Z2) # sigmoid(Z1)
         grad_X_Z1_W1 = matrix_right_mul_W_derivative(X, grad_Z1_a1) # X*W1 + b1, cacualte W 
         grad_X_Z1_b1 = matrix_plus_derivative(grad_Z1_a1, self.batch_size) # X*W1 + b1, cacualte b
 
@@ -173,6 +209,7 @@ class SimpleNN():
         print(self.b2)
         print(self.W3)
         print(self.b3)
+
 
     def train(self, X_train, Y_train, n_epoch, sample_size, batch_size, train_name):
         loss_check_point_x = []
@@ -193,7 +230,7 @@ class SimpleNN():
         plt.clf()
         plt.figure(figsize=(6.4, 4.8))
         plt.plot(loss_check_point_x, loss_check_point_y, marker='o')
-        plt.savefig(f'output/train_normal_{train_name}.jpg')
+        plt.savefig(f'output/train_ReLU_{train_name}.jpg')
 
     def test(self, X_test, Y_test, sample_size, test_name):
         prediction = self.forward(X_test, sample_size)
@@ -217,7 +254,7 @@ class SimpleNN():
             elif prediction_cls[i] == 1:
                 axes[1].scatter(X_test[i,0], X_test[i,1], color='g', marker='^')
 
-        plt.savefig(f'output/test_normal_{test_name}_scatter.jpg')
+        plt.savefig(f'output/test_ReLU_{test_name}_scatter.jpg')
 
 
 def XOR_easy():
