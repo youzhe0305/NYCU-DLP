@@ -63,14 +63,14 @@ def ReLU_derivative(x, grad_Y):
     '''
     return (x >= 0).astype(int) * grad_Y
 
-def Leakly_ReLU(x, alpha = 0.01):
+def Leaky_ReLU(x, alpha = 0.01):
     '''
     ReLU function, additional activation funciton
     x.shape: batch_size * n
     '''
     return np.where(x>0, x, alpha * x)
 
-def Leakly_ReLU_derivative(x, grad_Y, alpha=0.01):
+def Leaky_ReLU_derivative(x, grad_Y, alpha=0.01):
     '''
     Derivative of d Loss / d x
     formula: Leakly_ReLu(x) 

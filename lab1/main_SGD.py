@@ -178,12 +178,11 @@ class SimpleNN():
         loss_check_point_x = []
         loss_check_point_y = []
 
-        indexs = np.arange(X_train.shape[0])
-        indexs = np.random.shuffle(indexs)
-        X_train = X_train[indexs][0]
-        Y_train = Y_train[indexs][0]
-
         for epoch in range(n_epoch):
+            indexs = np.arange(X_train.shape[0])
+            indexs = np.random.shuffle(indexs)
+            X_train = X_train[indexs][0]
+            Y_train = Y_train[indexs][0]
             for batch in range( np.ceil(sample_size / batch_size).astype(int) ):
                 inputs = X_train[batch*batch_size : min(sample_size, (batch+1)*batch_size), :]
                 labels = Y_train[batch*batch_size : (batch+1)*batch_size, :]

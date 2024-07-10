@@ -63,14 +63,14 @@ def ReLU_derivative(x, grad_Y):
     '''
     return (x >= 0).astype(int) * grad_Y
 
-def Leakly_ReLU(x, alpha = 0.01):
+def Leaky_ReLU(x, alpha = 0.01):
     '''
     ReLU function, additional activation funciton
     x.shape: batch_size * n
     '''
     return np.where(x>0, x, alpha * x)
 
-def Leakly_ReLU_derivative(x, grad_Y, alpha=0.01):
+def Leaky_ReLU_derivative(x, grad_Y, alpha=0.01):
     '''
     Derivative of d Loss / d x
     formula: Leakly_ReLu(x) 
@@ -149,11 +149,11 @@ class SimpleNN():
             batch_size = self.batch_size
         # Layer 1
         self.Z1 = X@self.W1 + np.tile(self.b1, (batch_size, 1))
-        self.a1 = Leakly_ReLU(self.Z1)
+        self.a1 = Leaky_ReLU(self.Z1)
 
         # Layer 2
         self.Z2 = self.a1@self.W2 + np.tile(self.b2, (batch_size, 1))
-        self.a2 = Leakly_ReLU(self.Z2)
+        self.a2 = Leaky_ReLU(self.Z2)
 
         # Layer 3
         self.Z3 = self.a2@self.W3 + np.tile(self.b3, (batch_size, 1))
@@ -186,7 +186,7 @@ class SimpleNN():
         self.W3 -= grad_a2_Z3_W3 * self.lr
         self.b3 -= grad_a2_Z3_b3 * self.lr
 
-        grad_Z2_a2 = Leakly_ReLU_derivative(self.Z2, grad_a2_Z3) # sigmoid(Z2)
+        grad_Z2_a2 = Leaky_ReLU_derivative(self.Z2, grad_a2_Z3) # sigmoid(Z2)
         grad_a1_Z2_W2 = matrix_right_mul_W_derivative(self.a1, grad_Z2_a2) # a1*W2 + b2, cacualte W 
         grad_a1_Z2_b2 = matrix_plus_derivative(grad_Z2_a2, self.batch_size) # a1*W2 + b2, cacualte b
         grad_a1_Z2 = matrix_right_mul_X_derivative(self.W2, grad_Z2_a2) # a1*W2 + b2, cacualte X
@@ -195,7 +195,7 @@ class SimpleNN():
         self.W2 -= grad_a1_Z2_W2 * self.lr
         self.b2 -= grad_a1_Z2_b2 * self.lr
 
-        grad_Z1_a1 = Leakly_ReLU_derivative(self.Z1, grad_a1_Z2) # sigmoid(Z1)
+        grad_Z1_a1 = Leaky_ReLU_derivative(self.Z1, grad_a1_Z2) # sigmoid(Z1)
         grad_X_Z1_W1 = matrix_right_mul_W_derivative(X, grad_Z1_a1) # X*W1 + b1, cacualte W 
         grad_X_Z1_b1 = matrix_plus_derivative(grad_Z1_a1, self.batch_size) # X*W1 + b1, cacualte b
 
