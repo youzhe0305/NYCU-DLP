@@ -193,7 +193,8 @@ class SimpleNN():
         plt.clf()
         plt.figure(figsize=(6.4, 4.8))
         plt.plot(loss_check_point_x, loss_check_point_y, marker='o')
-        plt.savefig(f'output/train_normal_{train_name}.jpg')
+        plt.show()
+        # plt.savefig(f'output/train_normal_{train_name}.jpg')
 
     def test(self, X_test, Y_test, sample_size, test_name):
         prediction = self.forward(X_test, sample_size)
@@ -216,8 +217,9 @@ class SimpleNN():
                 axes[1].scatter(X_test[i,0], X_test[i,1], color='r')
             elif prediction_cls[i] == 1:
                 axes[1].scatter(X_test[i,0], X_test[i,1], color='g', marker='^')
-
-        plt.savefig(f'output/test_normal_{test_name}_scatter.jpg')
+        
+        plt.show()
+        # plt.savefig(f'output/test_normal_{test_name}_scatter.jpg')
 
 
 def XOR_easy():
