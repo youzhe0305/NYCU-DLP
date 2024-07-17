@@ -8,7 +8,6 @@ class MIBCI2aDataset(torch.utils.data.Dataset):
 
         X = []
         for p in os.listdir(filePath):
-            print(f'{filePath}{p}')
             # load_data shape: (288,22,438) 288 trial, signal: (22,438)
             # 22 -> electrode(channel), 438 -> time point
             load_data = np.load(f'{filePath}{p}') 
@@ -16,7 +15,6 @@ class MIBCI2aDataset(torch.utils.data.Dataset):
         X = np.array(X).astype(float)
         X = torch.from_numpy(X).type(torch.float32)
         X = X.view(-1, X.shape[2], X.shape[3])
-        print(X.shape)
         return X
 
         """
@@ -29,7 +27,6 @@ class MIBCI2aDataset(torch.utils.data.Dataset):
         # implement the getLabels method
         Y= []
         for p in os.listdir(filePath):
-            print(f'{filePath}{p}')
             load_data = np.load(f'{filePath}{p}') # shape: (288)
             Y.append(load_data)
         Y = np.array(Y)
@@ -51,15 +48,20 @@ class MIBCI2aDataset(torch.utils.data.Dataset):
             # leave-one-subject-out: ./dataset/LOSO_train/features/ and ./dataset/LOSO_train/labels/
             self.features = self._getFeatures(filePath='./dataset/LOSO_train/features/')
             self.labels = self._getLabels(filePath='./dataset/LOSO_train/labels/')
-        if mode == 'finetune':
+            print('Dataset Build')
+        elif mode == 'finetune':
             # finetune: ./dataset/FT/features/ and ./dataset/FT/labels/
             self.features = self._getFeatures(filePath='./dataset/FT/features/')
             self.labels = self._getLabels(filePath='./dataset/FT/labels/')
-        if mode == 'test':
+            print('Dataset Build')
+        elif mode == 'test':
             # subject dependent: ./dataset/SD_test/features/ and ./dataset/SD_test/labels/
             # leave-one-subject-out and finetune: ./dataset/LOSO_test/features/ and ./dataset/LOSO_test/labels/
             self.features = self._getFeatures(filePath='./dataset/SD_test/features/')
             self.labels = self._getLabels(filePath='./dataset/SD_test/labels/')
+            print('Dataset Build')
+        else:
+            print('Dataset Fail')
 
     def __len__(self):
         # implement the len method

@@ -12,9 +12,10 @@ class SquareLayer(nn.Module):
         pass
 
 class SCCNet(nn.Module):
-    def __init__(self, numClasses=0, timeSample=0, Nu=0, C=0, Nc=0, Nt=1, dropoutRate=0.5): 
+    def __init__(self, device=torch.device('cpu'), numClasses=0, timeSample=0, Nu=0, C=0, Nc=0, Nt=1, dropoutRate=0.5): 
         super(SCCNet, self).__init__()
         
+        self.device = device
         self.criterion = nn.CrossEntropyLoss()
         # Zero-padding and batch normalization were applied to both the first and second convolutions
         # Spatial component analysis 空間
@@ -60,7 +61,7 @@ class SCCNet(nn.Module):
     def get_loss(self, Y_pred, Y):
 
         Y = Y.type(torch.LongTensor)
-        Y = nn.functional.one_hot(Y, num_classes=4).type(torch.float)
+        Y = nn.functional.one_hot(Y, num_classes=4).type(torch.float).to(self.device)
         loss = self.criterion(Y_pred, Y)
         return loss
 

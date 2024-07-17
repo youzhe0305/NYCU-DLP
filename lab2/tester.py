@@ -3,14 +3,18 @@ import torch.nn.functional as F
 from Dataloader import MIBCI2aDataset
 from model.SCCNet import SCCNet
 from torch.utils.data import DataLoader
+import os
 
-device = torch.device( 'cuda' if torch.cuda.is_available() else 'cpu' )
+device = torch.device( 'cuda:2' if torch.cuda.is_available() else 'cpu' )
 
 if __name__ == '__main__':
 
         
-    dataset = MIBCI2aDataset('train')
-    model = SCCNet(numClasses=4, timeSample=0, Nu=22, C=22, Nc=0, Nt=1, dropoutRate=0)
+    dataset = MIBCI2aDataset('test')
+    if os.path.exists('model_weight/model_for_test.pt'):
+        model = torch.load('model_weight/model_for_test.pt')
+    else:
+        model = SCCNet(numClasses=4, device=device, timeSample=0, Nu=22, C=22, Nc=0, Nt=1, dropoutRate=0).to(device)
     model.eval()
 
     idx = 0
@@ -37,4 +41,4 @@ if __name__ == '__main__':
         all_correct_case += correct_case
         all_sample += labels.shape[0]
     
-    print(f'test accuracy: {all_correct_case/all_sample}, loss:{sum(all_loss)/len(all_loss)}')
+    print(f'test accuracy: {all_correct_case/all_sample * 100}%, loss:{sum(all_loss)/len(all_loss)}')
