@@ -4,17 +4,20 @@ from Dataloader import MIBCI2aDataset
 from model.SCCNet import SCCNet
 from torch.utils.data import DataLoader
 import os
+from trainer import fine_tunning
 
 device = torch.device( 'cuda:2' if torch.cuda.is_available() else 'cpu' )
 
+
 if __name__ == '__main__':
 
-        
     dataset = MIBCI2aDataset('test')
-    if os.path.exists('model_weight/model_for_test.pt'):
-        model = torch.load('model_weight/model_for_test.pt')
+
+    if os.path.exists('model_weight/model.pt'):
+        print('load model')
+        model = torch.load('model_weight/model.pt')
     else:
-        model = SCCNet(numClasses=4, device=device, timeSample=0, Nu=22, C=22, Nc=0, Nt=1, dropoutRate=0).to(device)
+        model = SCCNet(numClasses=4, device=device,Nu=22, C=22, Nc=0, Nt=1).to(device)
     model.eval()
 
     idx = 0

@@ -46,20 +46,17 @@ class MIBCI2aDataset(torch.utils.data.Dataset):
         if mode == 'train':
             # subject dependent: ./dataset/SD_train/features/ and ./dataset/SD_train/labels/
             # leave-one-subject-out: ./dataset/LOSO_train/features/ and ./dataset/LOSO_train/labels/
-            self.features = self._getFeatures(filePath='./dataset/LOSO_train/features/')
-            self.labels = self._getLabels(filePath='./dataset/LOSO_train/labels/')
-            print('Dataset Build')
+            self.features = self._getFeatures(filePath='./dataset/SD_train/features/')
+            self.labels = self._getLabels(filePath='./dataset/SD_train/labels/')
         elif mode == 'finetune':
             # finetune: ./dataset/FT/features/ and ./dataset/FT/labels/
             self.features = self._getFeatures(filePath='./dataset/FT/features/')
             self.labels = self._getLabels(filePath='./dataset/FT/labels/')
-            print('Dataset Build')
         elif mode == 'test':
             # subject dependent: ./dataset/SD_test/features/ and ./dataset/SD_test/labels/
             # leave-one-subject-out and finetune: ./dataset/LOSO_test/features/ and ./dataset/LOSO_test/labels/
-            self.features = self._getFeatures(filePath='./dataset/SD_test/features/')
-            self.labels = self._getLabels(filePath='./dataset/SD_test/labels/')
-            print('Dataset Build')
+            self.features = self._getFeatures(filePath='./dataset/LOSO_test/features/')
+            self.labels = self._getLabels(filePath='./dataset/LOSO_test/labels/')
         else:
             print('Dataset Fail')
 

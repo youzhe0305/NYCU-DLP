@@ -9,6 +9,14 @@ class SquareLayer(nn.Module):
     def __init__(self):
         super().__init__()
     def forward(self, x):
+        return x ** 2
+        pass
+
+class LogLayer(nn.Module):
+    def __init__(self):
+        super().__init__()
+    def forward(self, x):
+        return torch.log(x)
         pass
 
 class SCCNet(nn.Module):
@@ -17,31 +25,31 @@ class SCCNet(nn.Module):
         
         self.device = device
         self.criterion = nn.CrossEntropyLoss()
-        # Zero-padding and batch normalization were applied to both the first and second convolutions
         # Spatial component analysis 空間
         self.first_block = nn.Sequential(
             nn.Conv2d(in_channels=1, out_channels=Nu, kernel_size=(C, Nt), padding_mode='zeros', padding=Nt-1), # input: (batch, channel, Height, Width)
-            nn.LeakyReLU(),
+            nn.BatchNorm2d(Nu),
+            # nn.LeakyReLU(),
             nn.Dropout(dropoutRate)
         )
-        
         # Spatiotemporal(時空) filtering
         self.secood_block = nn.Sequential(
             nn.Conv2d(in_channels=1, out_channels=20, kernel_size=(Nu, 12), padding_mode='zeros', padding=(0,5) ),
-            nn.LeakyReLU(),
+            nn.BatchNorm2d(20),
+            SquareLayer(),
+            # nn.LeakyReLU(),
             nn.Dropout(dropoutRate)
         )
-        
         # Temporal(時間的) smoothing
         self.third_block = nn.Sequential(
             nn.AvgPool2d(kernel_size=(1,62), stride=(1,12)), # input: (batch, channel, Height, Width)
-            nn.LeakyReLU(),
-            nn.Dropout(dropoutRate)    
+            LogLayer()
+            # nn.LeakyReLU(),
         )
-        
         # output shape: (20,T/12)
-        self.fc = nn.Linear(in_features= 20*int((438-62)/12 + 1), out_features=4) 
-
+        self.fc = nn.Sequential(
+            nn.Linear(in_features= 20*int((438-62)/12 + 1), out_features=4),
+        )
         pass
 
     def forward(self, x):
