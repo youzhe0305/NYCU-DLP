@@ -13,9 +13,9 @@ if __name__ == '__main__':
 
     dataset = MIBCI2aDataset('test')
 
-    if os.path.exists('model_weight/model.pt'):
+    if os.path.exists('model_weight/model_FT_80.2%.pt'):
         print('load model')
-        model = torch.load('model_weight/model.pt')
+        model = torch.load('model_weight/model_FT_80.2%.pt')
     else:
         model = SCCNet(numClasses=4, device=device,Nu=22, C=22, Nc=0, Nt=1).to(device)
     model.eval()

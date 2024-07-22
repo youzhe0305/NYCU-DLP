@@ -46,8 +46,8 @@ class MIBCI2aDataset(torch.utils.data.Dataset):
         if mode == 'train':
             # subject dependent: ./dataset/SD_train/features/ and ./dataset/SD_train/labels/
             # leave-one-subject-out: ./dataset/LOSO_train/features/ and ./dataset/LOSO_train/labels/
-            self.features = self._getFeatures(filePath='./dataset/SD_train/features/')
-            self.labels = self._getLabels(filePath='./dataset/SD_train/labels/')
+            self.features = self._getFeatures(filePath='./dataset/LOSO_train/features/')
+            self.labels = self._getLabels(filePath='./dataset/LOSO_train/labels/')
         elif mode == 'finetune':
             # finetune: ./dataset/FT/features/ and ./dataset/FT/labels/
             self.features = self._getFeatures(filePath='./dataset/FT/features/')

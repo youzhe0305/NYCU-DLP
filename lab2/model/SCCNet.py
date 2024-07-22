@@ -29,7 +29,6 @@ class SCCNet(nn.Module):
         self.first_block = nn.Sequential(
             nn.Conv2d(in_channels=1, out_channels=Nu, kernel_size=(C, Nt), padding_mode='zeros', padding=Nt-1), # input: (batch, channel, Height, Width)
             nn.BatchNorm2d(Nu),
-            # nn.LeakyReLU(),
             nn.Dropout(dropoutRate)
         )
         # Spatiotemporal(時空) filtering
@@ -37,14 +36,12 @@ class SCCNet(nn.Module):
             nn.Conv2d(in_channels=1, out_channels=20, kernel_size=(Nu, 12), padding_mode='zeros', padding=(0,5) ),
             nn.BatchNorm2d(20),
             SquareLayer(),
-            # nn.LeakyReLU(),
             nn.Dropout(dropoutRate)
         )
         # Temporal(時間的) smoothing
         self.third_block = nn.Sequential(
             nn.AvgPool2d(kernel_size=(1,62), stride=(1,12)), # input: (batch, channel, Height, Width)
             LogLayer()
-            # nn.LeakyReLU(),
         )
         # output shape: (20,T/12)
         self.fc = nn.Sequential(
