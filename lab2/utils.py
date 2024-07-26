@@ -1,11 +1,5 @@
 import matplotlib.pyplot as plt
 
-
-# 畫training loss的圖
-# 把不同訓練的結果資料存成txt然後畫圖
-
-
-
 def training_loss_plot(loss_log, filename):
 
     x = loss_log[0]
@@ -21,7 +15,7 @@ def training_mathod_log(test_name, accuracy, loss):
 
 def accuracy_bar_chart():
     categories = ['LOSO', 'SD', 'LOSO_FT']
-    acc = [0.625, 0.6393, 0.7465]
+    acc = [0.625, 0.6393,  0.8021]
     plt.bar(categories, acc)
     plt.title('accuracy comparison')
     plt.xlabel('training method')

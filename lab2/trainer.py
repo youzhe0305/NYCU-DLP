@@ -51,7 +51,7 @@ def fine_tunning(model, hyper_paramaters): # function for fine tune train, mostl
     dataloader = DataLoader(dataset, batch_size=hyper_paramaters['batch_size'], shuffle=True) 
 
     model.train()
-    optimizer = torch.optim.Adam(model.parameters(), lr=hyper_paramaters['learning rate'], weight_decay=1)
+    optimizer = torch.optim.Adam(model.parameters(), lr=hyper_paramaters['learning rate'], weight_decay=1e-4)
 
 
     n_epoch = hyper_paramaters['n_epoch']

@@ -5,11 +5,9 @@ import os
 class MIBCI2aDataset(torch.utils.data.Dataset):
     def _getFeatures(self, filePath):
         # implement the getFeatures method
-
+        # put all trial in one array
         X = []
         for p in os.listdir(filePath):
-            # load_data shape: (288,22,438) 288 trial, signal: (22,438)
-            # 22 -> electrode(channel), 438 -> time point
             load_data = np.load(f'{filePath}{p}') 
             X.append(load_data)
         X = np.array(X).astype(float)

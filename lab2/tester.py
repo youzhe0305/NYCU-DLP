@@ -18,12 +18,12 @@ if __name__ == '__main__':
         model = torch.load('model_weight/model_FT_80.2%.pt')
     else:
         model = SCCNet(numClasses=4, device=device,Nu=22, C=22, Nc=0, Nt=1).to(device)
-    model.eval()
+    model.eval() # open eval mode, close dropout layer
 
     idx = 0
-    all_correct_case = 0
-    all_sample = 0
-    all_loss = []
+    all_correct_case = 0 # store the correct case number in each batch
+    all_sample = 0 # smaple number
+    all_loss = [] # store all loss in each batch
     dataloader = DataLoader(dataset=dataset, batch_size=len(dataset), shuffle=False)
     for i, (features, labels) in enumerate(dataloader):
         idx += 1
@@ -31,7 +31,7 @@ if __name__ == '__main__':
         labels = labels.to(device)
 
         print(f'subject {idx}')
-        output = model.forward(features)
+        output = model.forward(features) 
         class_prob = F.softmax(output, dim=1) # dim to provide the dim softmax should process (may be a dim for batch)
         prediction = torch.argmax(class_prob, dim=1)
 
@@ -39,7 +39,6 @@ if __name__ == '__main__':
         all_loss.append(loss)
 
         correct_case = torch.sum( (prediction == labels).type(torch.int) ).item()
-        subject_acc = correct_case / labels.shape[0]
 
         all_correct_case += correct_case
         all_sample += labels.shape[0]
