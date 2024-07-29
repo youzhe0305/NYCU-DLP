@@ -15,7 +15,7 @@ def test():
         'batch_size': 20, 
     }
 
-    dataset = load_dataset('dataset', 'test')
+    dataset = load_dataset('dataset/oxford-iiit-pet', 'test')
     dataloader = DataLoader(dataset, hyper_parameter['batch_size'], shuffle=False)
     model = torch.load('saved_models/model_UNet_90_90.pth', map_location=device)
     model.device = device

@@ -11,7 +11,7 @@ def evaluate(net, device):
         'batch_size': 10, 
     }
 
-    dataset = load_dataset('dataset', 'valid')
+    dataset = load_dataset('dataset/oxford-iiit-pet', 'valid')
     dataloader = DataLoader(dataset, hyper_parameter['batch_size'], shuffle=False)
     model = net
     model.eval()
@@ -42,7 +42,7 @@ def evaluate(net, device):
 if __name__ == '__main__':
 
     device = torch.device( 'cuda:1' if torch.cuda.is_available() else 'cpu' )
-    model = torch.load('saved_models/model_Res34_UNet.pth')
+    model = torch.load('saved_models/model_UNet.pth')
     loss, dice = evaluate(model, device)
     print(f'validation loss: {loss}, dice socre: {dice*100}%')
 

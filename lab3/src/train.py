@@ -22,7 +22,7 @@ def train_UNet():
         'bilinear': True
     }
 
-    dataset = load_dataset('dataset', 'train')
+    dataset = load_dataset('dataset/oxford-iiit-pet', 'train')
     dataloader = DataLoader(dataset, hyper_parameter['batch_size'], shuffle=True)
     if os.path.exists('saved_models/model_UNet.pth'):
         print('load trained model')

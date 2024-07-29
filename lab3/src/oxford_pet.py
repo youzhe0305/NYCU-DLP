@@ -172,8 +172,8 @@ def load_dataset(data_path, mode):
 
 if __name__ == '__main__':
     
-    # OxfordPetDataset.download('dataset')
-    dataset = load_dataset('dataset', mode='train')
-    print(dataset[0]['image'].shape)
-    simple_dataset = SimpleOxfordPetDataset('dataset', mode='train')
-    print(simple_dataset[0]['image'].shape)
+    OxfordPetDataset.download('dataset/oxford-iiit-pet')
+    # dataset = load_dataset('dataset', mode='train')
+    # print(dataset[0]['image'].shape)
+    # simple_dataset = SimpleOxfordPetDataset('dataset', mode='train')
+    # print(simple_dataset[0]['image'].shape)
