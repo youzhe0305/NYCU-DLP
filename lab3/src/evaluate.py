@@ -8,7 +8,7 @@ from utils import dice_score
 def evaluate(net, device):
     # implement the evaluation function here
     hyper_parameter = {
-        'batch_size': 30, 
+        'batch_size': 10, 
     }
 
     dataset = load_dataset('dataset', 'valid')
@@ -41,7 +41,7 @@ def evaluate(net, device):
 
 if __name__ == '__main__':
 
-    device = torch.device( 'cuda:3' if torch.cuda.is_available() else 'cpu' )
+    device = torch.device( 'cuda:1' if torch.cuda.is_available() else 'cpu' )
     model = torch.load('saved_models/model_Res34_UNet.pth')
     loss, dice = evaluate(model, device)
     print(f'validation loss: {loss}, dice socre: {dice*100}%')

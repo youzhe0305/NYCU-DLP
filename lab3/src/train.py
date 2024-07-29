@@ -8,17 +8,18 @@ import torch
 from utils import training_loss_plot
 import os
 
-device = torch.device( 'cuda:3' if torch.cuda.is_available() else 'cpu' )
+os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
+device = torch.device( 'cuda:1' if torch.cuda.is_available() else 'cpu' )
 
 def train_UNet():
     # implement the training function here
     
     hyper_parameter = {
         'n_epoch': 200,
-        'batch_size': 60, # 3312 samples for train
+        'batch_size': 20, # 3312 samples for train
         'learning_rate': 0.001,
-        'regularization': 1e-4,
-        'bilinear': False
+        'regularization': 0,
+        'bilinear': True
     }
 
     dataset = load_dataset('dataset', 'train')
@@ -49,24 +50,24 @@ def train_UNet():
             optimizer.zero_grad()
         avg_epoch_loss = sum(epoch_loss) / len(epoch_loss)
         validation_loss, validation_dice = evaluate(model, device)
-        print(f'epoch: {epoch+1}, training_loss: {round(avg_epoch_loss,4)}, testing_loss: {round(validation_loss,4)}, dice score: {round(validation_dice,4)*100}%')
+        with open('output/training_process_record.txt', 'a') as f:
+            f.write(f'{epoch},{avg_epoch_loss},{validation_loss},{validation_dice}\n')
+        print(f'epoch: {epoch+1}, training_loss: {round(avg_epoch_loss,4)}, validation_loss: {round(validation_loss,4)}, dice score: {round(validation_dice,4)*100}%')
         if max_acc < validation_dice:
             max_acc = validation_dice
             torch.save(model, 'saved_models/model_UNet.pth')
-
         if (epoch+1)%5 == 0 or epoch==0:
             loss_log.append(avg_epoch_loss)
             epoch_log.append(epoch+1)
     training_loss_plot((loss_log, epoch_log), 'UNet_traing_loss.jpg')
 
-
 def train_Res34_UNet():
     # implement the training function here
     
     hyper_parameter = {
-        'n_epoch': 200,
-        'batch_size': 80, # 3312 samples for train
-        'learning_rate': 0.0005,
+        'n_epoch': 300,
+        'batch_size': 100, # 3312 samples for train
+        'learning_rate': 0.001,
         'regularization': 0,
         'bilinear': True,
     }
@@ -100,7 +101,9 @@ def train_Res34_UNet():
             optimizer.zero_grad()
         avg_epoch_loss = sum(epoch_loss) / len(epoch_loss)
         validation_loss, validation_dice = evaluate(model, device)
-        print(f'epoch: {epoch+1}, training_loss: {round(avg_epoch_loss,4)}, testing_loss: {round(validation_loss,4)}, dice score: {round(validation_dice,4)*100}%')
+        with open('output/training_process_record.txt', 'a') as f:
+            f.write(f'{epoch},{avg_epoch_loss},{validation_loss},{validation_dice}\n')
+        print(f'epoch: {epoch+1}, training_loss: {round(avg_epoch_loss,4)}, validation_loss: {round(validation_loss,4)}, dice score: {round(validation_dice,4)*100}%')
         
         if max_acc < validation_dice:
             max_acc = validation_dice
@@ -123,4 +126,5 @@ def get_args():
  
 if __name__ == "__main__":
     print(device)
-    train_Res34_UNet()
+    # train_Res34_UNet()
+    train_UNet()

@@ -51,7 +51,6 @@ class UpSampling(nn.Module):
             self.conv = DoubleConv(in_channels, mid_channels, out_channels)
         # self.norm = nn.BatchNorm2d(in_channels)
 
-        
     def forward(self, x, concat=None):
         # (batch, channel, height, width)
         if concat != None:
@@ -69,7 +68,7 @@ class ResNet34_Unet(nn.Module):
         self.criterion = nn.CrossEntropyLoss(reduction='mean')
 
         self.Res_part1 = nn.Sequential(
-            nn.Conv2d(in_channels=in_channels, out_channels=64, kernel_size=(7,7), stride=2, padding=(3,3)), # scale down 2
+            nn.Conv2d(in_channels=in_channels, out_channels=64, kernel_size=(7,7), stride=2, padding_mode='reflect', padding=(3,3)), # scale down 2
             nn.BatchNorm2d(64),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=(3,3), stride=(2,2), padding=(1,1) ) # scale down 2

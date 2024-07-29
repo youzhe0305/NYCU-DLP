@@ -9,12 +9,12 @@ class DoubleConv(nn.Module):
         super().__init__()
         self.first_conv = nn.Sequential(
             # padding = 1 -> maintain same size
-            nn.Conv2d(in_channels=in_channels, out_channels=mid_channels, kernel_size=(3,3), padding_mode='zeros', padding=1),
+            nn.Conv2d(in_channels=in_channels, out_channels=mid_channels, kernel_size=(3,3), padding_mode='reflect', padding=1),
             nn.BatchNorm2d(mid_channels), # feature channel
             nn.ReLU()
         )
         self.second_conv = nn.Sequential(
-            nn.Conv2d(in_channels=mid_channels, out_channels=out_channels, kernel_size=(3,3), padding_mode='zeros', padding=1),
+            nn.Conv2d(in_channels=mid_channels, out_channels=out_channels, kernel_size=(3,3), padding_mode='reflect', padding=1),
             nn.BatchNorm2d(out_channels), # feature channel
             nn.ReLU()
         )
@@ -90,7 +90,7 @@ class UNet(nn.Module):
         self.expansive_path_part3 = UpSampling(in_channels=256, mid_channels=128//factor, out_channels=128//factor, bilinear=bilinear)
         self.expansive_path_part4 = UpSampling(in_channels=128, mid_channels=64, out_channels=64, bilinear=bilinear)
         self.output = nn.Sequential(
-            nn.Conv2d(in_channels=64, out_channels=n_class, kernel_size=(3,3), padding_mode='zeros', padding=1),
+            nn.Conv2d(in_channels=64, out_channels=n_class, kernel_size=(1,1), padding_mode='reflect', padding=0),
         )
 
 

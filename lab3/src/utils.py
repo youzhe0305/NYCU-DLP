@@ -21,3 +21,5 @@ def training_loss_plot(loss_log, filename):
     plt.plot(x, y, marker='o')
     plt.show()
     plt.savefig(f'output/{filename}')
+
+

@@ -6,18 +6,19 @@ import torch
 import torch.nn.functional as F
 
 
-device = torch.device( 'cuda:3' if torch.cuda.is_available() else 'cpu' )
+device = torch.device( 'cuda:1' if torch.cuda.is_available() else 'cpu' )
 
 
 def test():
     
     hyper_parameter = {
-        'batch_size': 50, 
+        'batch_size': 20, 
     }
 
     dataset = load_dataset('dataset', 'test')
     dataloader = DataLoader(dataset, hyper_parameter['batch_size'], shuffle=False)
-    model = torch.load('saved_models/model_Res34_UNet.pth')
+    model = torch.load('saved_models/model_UNet_90_90.pth', map_location=device)
+    model.device = device
     model.eval()
 
     epoch_loss = []

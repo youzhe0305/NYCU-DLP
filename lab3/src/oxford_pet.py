@@ -7,6 +7,7 @@ from PIL import Image
 from tqdm import tqdm
 from urllib.request import urlretrieve
 
+import torchvision.transforms.v2 as transforms
 import matplotlib.pyplot as plt
 import cv2
 
@@ -40,7 +41,7 @@ class OxfordPetDataset(torch.utils.data.Dataset):
 
         sample = dict(image=image, mask=mask, trimap=trimap)
         if self.transform is not None:
-            sample = self.transform(**sample)
+            sample = self.transform(**sample) # 當參數傳入時，加上**可作字典解包，相當於直接傳入dict的value
 
         return sample
 
@@ -134,14 +135,45 @@ def extract_archive(filepath):
 
 def load_dataset(data_path, mode):
     # implement the load dataset function here
-    return SimpleOxfordPetDataset(root=data_path, mode=mode, transform=None) # transform for preprocess funciotn(image, mask, trimap)
-    assert False, "Not implemented yet!"
+
+    class My_transforms():
+        def __init__(self, transforms):
+            self.transforms = transforms
+        
+        def __call__(self, image, mask, trimap): 
+            image = Image.fromarray(image) # 換成PIL Image才能套torchvision的transforms
+            mask = Image.fromarray(mask)
+            trimap = Image.fromarray(trimap) 
+            transformed_image = np.moveaxis(np.array(self.transforms(image)), -1, 0)
+            transformed_mask = np.expand_dims(np.array(self.transforms(mask)), 0)
+            transformed_trimap = np.expand_dims(np.array(self.transforms(trimap)), 0)
+            return dict(image=transformed_image, mask=transformed_mask, trimap=transformed_trimap)
+
+    training_data_transform = My_transforms(transforms.Compose([ # 因為放在Compose外面，所以image, mask, trimap會分別套進Compose裡的東西，裡面不用加Mytransform
+        transforms.Resize((256,256)),
+        transforms.RandomChoice([
+            #transforms.RandomHorizontalFlip(p=0.2),
+            #transforms.RandomVerticalFlip(p=0.2),
+            transforms.RandomApply([
+                transforms.ElasticTransform(alpha=30, interpolation=transforms.InterpolationMode.BICUBIC)
+            ], p=0.2),
+            # transforms.RandomApply([
+            # transforms.RandomCrop((256,256)),
+            # ], p=0.2),
+        ]),
+        transforms.Resize((256,256)), 
+        ]),
+    )
+
+    if mode == 'train':
+        return OxfordPetDataset(root=data_path, mode=mode, transform=training_data_transform)
+    else:
+        return SimpleOxfordPetDataset(root=data_path, mode=mode, transform=None)
 
 if __name__ == '__main__':
     
     # OxfordPetDataset.download('dataset')
-    dataset = OxfordPetDataset('dataset', mode='train')
-    plt.imshow(dataset[0]['image'])
-    plt.savefig('output/test.jpg')
+    dataset = load_dataset('dataset', mode='train')
+    print(dataset[0]['image'].shape)
     simple_dataset = SimpleOxfordPetDataset('dataset', mode='train')
     print(simple_dataset[0]['image'].shape)
