@@ -9,20 +9,20 @@ from utils import training_loss_plot
 import os
 
 os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
-device = torch.device( 'cuda:1' if torch.cuda.is_available() else 'cpu' )
+device = torch.device( 'cuda' if torch.cuda.is_available() else 'cpu' )
 
-def train_UNet():
+def train_UNet(args):
     # implement the training function here
     
     hyper_parameter = {
-        'n_epoch': 200,
-        'batch_size': 20, # 3312 samples for train
-        'learning_rate': 0.001,
+        'n_epoch': args.epochs,
+        'batch_size': args.batch_size, # 3312 samples for train
+        'learning_rate': args.learning_rate,
         'regularization': 0,
         'bilinear': True
     }
 
-    dataset = load_dataset('dataset/oxford-iiit-pet', 'train')
+    dataset = load_dataset(f'{args.data_path}', 'train')
     dataloader = DataLoader(dataset, hyper_parameter['batch_size'], shuffle=True)
     if os.path.exists('saved_models/model_UNet.pth'):
         print('load trained model')
@@ -61,18 +61,18 @@ def train_UNet():
             epoch_log.append(epoch+1)
     training_loss_plot((loss_log, epoch_log), 'UNet_traing_loss.jpg')
 
-def train_Res34_UNet():
+def train_Res34_UNet(args):
     # implement the training function here
     
     hyper_parameter = {
-        'n_epoch': 300,
-        'batch_size': 100, # 3312 samples for train
-        'learning_rate': 0.001,
+        'n_epoch': args.epochs,
+        'batch_size': args.batch_size, # 3312 samples for train
+        'learning_rate': args.learning_rate,
         'regularization': 0,
         'bilinear': True,
     }
 
-    dataset = load_dataset('dataset', 'train')
+    dataset = load_dataset(args.data_path, 'train')
     dataloader = DataLoader(dataset, hyper_parameter['batch_size'], shuffle=True)
     if os.path.exists('saved_models/model_Res34_UNet.pth'):
         print('load trained model')
@@ -117,14 +117,20 @@ def train_Res34_UNet():
 
 def get_args():
     parser = argparse.ArgumentParser(description='Train the UNet on images and target masks')
+    parser.add_argument('--model', type=str, help='choose the model to train')
     parser.add_argument('--data_path', type=str, help='path of the input data')
     parser.add_argument('--epochs', '-e', type=int, default=5, help='number of epochs')
     parser.add_argument('--batch_size', '-b', type=int, default=1, help='batch size')
-    parser.add_argument('--learning-rate', '-lr', type=float, default=1e-5, help='learning rate')
+    parser.add_argument('--learning_rate', '-lr', type=float, default=1e-5, help='learning rate')
 
     return parser.parse_args()
- 
+
+# UNet command: python3 src/train.py --model UNet --data_path dataset/oxford-iiit-pet --epochs 300 --batch_size 20 --learning_rate 0.001
+# ResNet34_UNet command: python3 src/train.py --model ResNet34_UNet --data_path dataset/oxford-iiit-pet --epochs 300 --batch_size 60 --learning_rate 0.001
+
 if __name__ == "__main__":
-    print(device)
-    # train_Res34_UNet()
-    train_UNet()
+    args = get_args()
+    if args.model == 'UNet':
+        train_UNet(args)
+    elif args.model == 'ResNet34_UNet':
+        train_Res34_UNet(args)
