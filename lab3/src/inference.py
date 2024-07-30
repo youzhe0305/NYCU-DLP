@@ -6,18 +6,18 @@ import torch
 import torch.nn.functional as F
 
 
-device = torch.device( 'cuda:1' if torch.cuda.is_available() else 'cpu' )
+device = torch.device( 'cuda' if torch.cuda.is_available() else 'cpu' )
 
 
-def test():
+def test(args):
     
     hyper_parameter = {
-        'batch_size': 20, 
+        'batch_size': args.batch_size, 
     }
 
-    dataset = load_dataset('dataset/oxford-iiit-pet', 'test')
+    dataset = load_dataset(f'{args.data_path}', 'test')
     dataloader = DataLoader(dataset, hyper_parameter['batch_size'], shuffle=False)
-    model = torch.load('saved_models/model_UNet_90_90.pth', map_location=device)
+    model = torch.load(args.model, map_location=device)
     model.device = device
     model.eval()
 
@@ -53,5 +53,9 @@ def get_args():
     
     return parser.parse_args()
 
+#  command: python src/inference.py --model saved_models/DL_Lab3_UNet_112550069_謝侑哲 --data_path dataset\oxford-iiit-pet --batch_size 1
+
 if __name__ == '__main__':
-    test()
+    args = get_args()
+    print(args)
+    test(args)
