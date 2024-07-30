@@ -53,8 +53,8 @@ def get_args():
     
     return parser.parse_args()
 
-#  command: python src/inference.py --model saved_models/DL_Lab3_UNet_112550069_謝侑哲 --data_path dataset\oxford-iiit-pet --batch_size 1
-
+# UNet command: python3 src/inference.py --model saved_models/DL_Lab3_UNet_112550069_謝侑哲.pth --data_path dataset/oxford-iiit-pet --batch_size 1
+# Res34_UNet command: python3 src/inference.py --model saved_models/DL_Lab3_ResNet34_UNet_112550069_謝侑哲.pth --data_path dataset/oxford-iiit-pet --batch_size 1
 if __name__ == '__main__':
     args = get_args()
     print(args)
