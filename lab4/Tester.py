@@ -137,7 +137,7 @@ class Test_model(VAE_Model):
 
             z = torch.randn(size=(1, self.args.N_dim, self.args.frame_H, self.args.frame_W)).to(self.args.device) # sample from standard distribution
             fused_features = self.Decoder_Fusion(transformed_ref_img, transformed_label, z)
-            prediction = self.Generator(fused_features)
+            prediction = torch.sigmoid(self.Generator(fused_features))
 
             decoded_frame_list.append(prediction)
             label_list.append(label[i,:,:,:,:])

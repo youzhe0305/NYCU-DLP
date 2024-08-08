@@ -42,7 +42,7 @@ class kl_annealing(): # 用來平衡KL-Divergence與圖片loss的方法，避免
         self.ratio = args.kl_anneal_ratio # increasing speed of weight
         self.epoch = current_epoch
         self.total_epoch = args.num_epoch
-        self.beta = 0
+        self.beta = 0.01
         if self.type == 'None':
             self.beta = 1
         
@@ -58,7 +58,7 @@ class kl_annealing(): # 用來平衡KL-Divergence與圖片loss的方法，避免
         # TODO
         return self.beta
 
-    def frange_cycle_linear(self, n_iter, start=0.0, stop=1.0,  n_cycle=1, ratio=1): 
+    def frange_cycle_linear(self, n_iter, start=0.01, stop=1.0,  n_cycle=1, ratio=1): 
         # start: beta start point, stop: the ceil of beta, ratio: the ratio to increase, otherwise stay in stop  
         # TODO
         period = np.ceil(n_iter / n_cycle)
@@ -96,7 +96,7 @@ class VAE_Model(nn.Module):
             self.optim = optim.Adam(self.parameters(), lr=self.args.lr)
         
         
-        self.scheduler  = optim.lr_scheduler.MultiStepLR(self.optim, milestones=[3,7,15], gamma=0.1)
+        self.scheduler  = optim.lr_scheduler.MultiStepLR(self.optim, milestones=[2, 5], gamma=0.1)
         self.kl_annealing = kl_annealing(args, current_epoch=0)
         self.mse_criterion = nn.MSELoss()
         self.current_epoch = 0
@@ -162,7 +162,7 @@ class VAE_Model(nn.Module):
             ###
             self.tqdm_bar('val', pbar, loss.detach().cpu(), lr=self.scheduler.get_last_lr()[0])
         ###
-        return total_loss
+        return 
         ###
     
     def mix_teacher_forcing(self, gt_img, pred_img, ratio):
@@ -188,7 +188,7 @@ class VAE_Model(nn.Module):
 
             z, mu, logvar = self.Gaussian_Predictor(transformed_gt_img, transformed_label)
             fused_features = self.Decoder_Fusion(transformed_ref_img, transformed_label, z)
-            prediction = self.Generator(fused_features)
+            prediction = torch.sigmoid(self.Generator(fused_features))
             pred_img = prediction # for next frame reference
             # MSE + KL(N(mean, var) | N(0,1))
 
@@ -219,7 +219,7 @@ class VAE_Model(nn.Module):
 
             z = torch.randn(size=(1, self.args.N_dim, self.args.frame_H, self.args.frame_W)).to(self.device) # sample from standard distribution
             fused_features = self.Decoder_Fusion(transformed_ref_img, transformed_label, z)
-            prediction = self.Generator(fused_features)
+            prediction = torch.sigmoid(self.Generator(fused_features))
             ref_img = prediction # previous image for reference to predict
 
             # MSE, no need to consider KL divergence, simply sample from std gaussian distirbution
