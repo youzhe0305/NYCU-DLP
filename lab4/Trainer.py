@@ -122,17 +122,22 @@ class VAE_Model(nn.Module):
             train_loader = self.train_dataloader()
             adapt_TeacherForcing = True if random.random() < self.tfr else False
 
-            for (img, label) in (pbar := tqdm(train_loader, ncols=120)):
+            total_loss = torch.zeros(1).to(self.args.device)
+            batch_num = 0
+            for (img, label) in (pbar := tqdm(train_loader, ncols=120, disable=True)):
                 # img, label shape: (batch_size=2, video_frames=16, 3, 32, 64)
                 img = img.to(self.device)
                 label = label.to(self.device)
                 loss = self.training_one_step(img, label, adapt_TeacherForcing, time_smoothing_rate=self.args.time_smoothing_rate)
+                total_loss += loss
+                batch_num += 1
                 beta = self.kl_annealing.get_beta()
                 if adapt_TeacherForcing:
                     self.tqdm_bar('train [TeacherForcing: ON, {:.1f}], beta: {}'.format(self.tfr, round(beta,2)), pbar, loss.detach().cpu(), lr=round(self.scheduler.get_last_lr()[0], 10))
                 else:
                     self.tqdm_bar('train [TeacherForcing: OFF, {:.1f}], beta: {}'.format(self.tfr, round(beta,2)), pbar, loss.detach().cpu(), lr=round(self.scheduler.get_last_lr()[0], 10))
-
+            print(f'teacher forcing: {self.tfr}, beta: {round(beta,2)}, lr: {round(self.scheduler.get_last_lr()[0], 10)}')
+            print(f'Epoch{self.current_epoch}, training average loss: {round(total_loss.item() / batch_num, 8)}')
             if self.current_epoch % self.args.per_save == 0:
                 self.save(os.path.join(self.args.save_root, f"epoch={self.current_epoch}.ckpt"))
             ###
@@ -153,7 +158,7 @@ class VAE_Model(nn.Module):
         ###
         total_loss = torch.zeros(1).to(self.device)
         ###
-        for (img, label) in (pbar := tqdm(val_loader, ncols=120)):
+        for (img, label) in (pbar := tqdm(val_loader, ncols=120, disable=True)):
             img = img.to(self.device)
             label = label.to(self.device)
             loss, psnr = self.val_one_step(img, label)
@@ -162,7 +167,8 @@ class VAE_Model(nn.Module):
             ###
             self.tqdm_bar('val', pbar, loss.detach().cpu(), lr=self.scheduler.get_last_lr()[0])
         ###
-        return 
+        print(f'Epoch{self.current_epoch}, ////////////////////////////////////// validation loss: {round(total_loss.item(),8)}')
+        return total_loss
         ###
     
     def mix_teacher_forcing(self, gt_img, pred_img, ratio):
