@@ -122,22 +122,22 @@ class VAE_Model(nn.Module):
             train_loader = self.train_dataloader()
             adapt_TeacherForcing = True if random.random() < self.tfr else False
 
-            total_loss = torch.zeros(1).to(self.args.device)
-            batch_num = 0
-            for (img, label) in (pbar := tqdm(train_loader, ncols=120, disable=True)):
+            # total_loss = torch.zeros(1).to(self.args.device)
+            # batch_num = 0
+            for (img, label) in (pbar := tqdm(train_loader, ncols=120)):
                 # img, label shape: (batch_size=2, video_frames=16, 3, 32, 64)
                 img = img.to(self.device)
                 label = label.to(self.device)
                 loss = self.training_one_step(img, label, adapt_TeacherForcing, time_smoothing_rate=self.args.time_smoothing_rate)
-                total_loss += loss
-                batch_num += 1
+                # total_loss += loss
+                # batch_num += 1
                 beta = self.kl_annealing.get_beta()
                 if adapt_TeacherForcing:
                     self.tqdm_bar('train [TeacherForcing: ON, {:.1f}], beta: {}'.format(self.tfr, round(beta,2)), pbar, loss.detach().cpu(), lr=round(self.scheduler.get_last_lr()[0], 10))
                 else:
                     self.tqdm_bar('train [TeacherForcing: OFF, {:.1f}], beta: {}'.format(self.tfr, round(beta,2)), pbar, loss.detach().cpu(), lr=round(self.scheduler.get_last_lr()[0], 10))
-            print(f'teacher forcing: {self.tfr}, beta: {round(beta,2)}, lr: {round(self.scheduler.get_last_lr()[0], 10)}')
-            print(f'Epoch{self.current_epoch}, training average loss: {round(total_loss.item() / batch_num, 8)}')
+            # print(f'teacher forcing: {self.tfr}, beta: {round(beta,2)}, lr: {round(self.scheduler.get_last_lr()[0], 10)}')
+            # print(f'Epoch{self.current_epoch}, training average loss: {round(total_loss.item() / batch_num, 8)}')
             if self.current_epoch % self.args.per_save == 0:
                 self.save(os.path.join(self.args.save_root, f"epoch={self.current_epoch}.ckpt"))
             ###
@@ -158,7 +158,7 @@ class VAE_Model(nn.Module):
         ###
         total_loss = torch.zeros(1).to(self.device)
         ###
-        for (img, label) in (pbar := tqdm(val_loader, ncols=120, disable=True)):
+        for (img, label) in (pbar := tqdm(val_loader, ncols=120)):
             img = img.to(self.device)
             label = label.to(self.device)
             loss, psnr = self.val_one_step(img, label)
@@ -167,7 +167,7 @@ class VAE_Model(nn.Module):
             ###
             self.tqdm_bar('val', pbar, loss.detach().cpu(), lr=self.scheduler.get_last_lr()[0])
         ###
-        print(f'Epoch{self.current_epoch}, ////////////////////////////////////// validation loss: {round(total_loss.item(),8)}')
+        # print(f'Epoch{self.current_epoch}, ////////////////////////////////////// validation loss: {round(total_loss.item(),8)}')
         return total_loss
         ###
     
@@ -218,7 +218,7 @@ class VAE_Model(nn.Module):
         ref_img = img[:,0,:,:,:] # predict image, for next frame's reference
         video_loss = torch.zeros(1).to(self.device)
         video_psnr = torch.zeros(1).to(self.device)
-        for idx in range(1,self.train_vi_len): # start predict from img 1(2nd frame)
+        for idx in range(1,self.val_vi_len): # start predict from img 1(2nd frame)
             
             transformed_ref_img = self.frame_transformation(ref_img) # frame encoder
             transformed_label = self.label_transformation(label[:,idx,:,:,:])
@@ -232,8 +232,8 @@ class VAE_Model(nn.Module):
             video_loss += self.mse_criterion(prediction, img[:,idx,:,:,:])
             video_psnr += Generate_PSNR(img[:,idx,:,:,:], prediction)
         
-        avg_loss = video_loss / (self.train_vi_len - 1)
-        avg_psnr = video_psnr / (self.train_vi_len - 1)
+        avg_loss = video_loss / (self.val_vi_len - 1)
+        avg_psnr = video_psnr / (self.val_vi_len - 1)
 
         return avg_loss, avg_psnr
 

@@ -4,3 +4,5 @@
 __pycache__
 dataset
 colab_weight
+nohup.out
+check_points

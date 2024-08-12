@@ -142,6 +142,8 @@ class Test_model(VAE_Model):
             decoded_frame_list.append(prediction)
             label_list.append(label[i,:,:,:,:])
         
+        print(decoded_frame_list[0].shape)
+        print(len(decoded_frame_list))
         # TODO
 
         # Please do not modify this part, it is used for visulization
@@ -239,7 +241,7 @@ if __name__ == '__main__':
     parser.add_argument('--kl_anneal_cycle',    type=int, default=10,               help="")
     parser.add_argument('--kl_anneal_ratio',    type=float, default=1,              help="")
     
-# python Tester.py --DR dataset --save_root output --ckpt_path check_points\epoch=3.ckpt --device cpu
+# python Tester.py --DR dataset --save_root output --ckpt_path check_points/best.ckpt
     
 
     args = parser.parse_args()
