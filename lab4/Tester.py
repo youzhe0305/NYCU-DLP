@@ -17,6 +17,9 @@ import glob
 import pandas as pd
 import sys
 
+import hashlib
+import random
+
 TA_ = """
  ██████╗ ██████╗ ███╗   ██╗ ██████╗ ██████╗  █████╗ ████████╗██╗   ██╗██╗      █████╗ ████████╗██╗ ██████╗ ███╗   ██╗███████╗    ██╗██╗██╗
 ██╔════╝██╔═══██╗████╗  ██║██╔════╝ ██╔══██╗██╔══██╗╚══██╔══╝██║   ██║██║     ██╔══██╗╚══██╔══╝██║██╔═══██╗████╗  ██║██╔════╝    ██║██║██║
@@ -186,13 +189,30 @@ class Test_model(VAE_Model):
 
 
 
+def str_to_int(str):
+
+    md5 = hashlib.md5()
+    md5.update(str.encode())
+    hash = md5.hexdigest() # 16進位
+    return int(hash, 16) % 2**23
+
+def set_seed(seed): # set the seed to ensure the result will be same
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(seed)
 
 def main(args):
+    
+    seed = str_to_int('Nijika')
+    set_seed(seed)
     os.makedirs(args.save_root, exist_ok=True)
     model = Test_model(args).to(args.device)
     model.load_checkpoint(args)
     model.eval()
-
+    pytorch_total_params = sum(p.numel() for p in model.parameters())
+    print(f"number of params: {pytorch_total_params}")
 
 
 
