@@ -6,4 +6,8 @@ dataset
 colab_weight
 nohup.out
 check_points
-*.csv
+submission.csv
+model_weight
+cat_face
+checkpoints
+transformer_checkpoints
