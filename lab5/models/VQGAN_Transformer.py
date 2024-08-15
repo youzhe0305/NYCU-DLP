@@ -6,7 +6,7 @@ import math
 import numpy as np
 from .VQGAN import VQGAN
 from .Transformer import BidirectionalTransformer
-
+import torch.nn.functional as F
 
 #TODO2 step1: design the MaskGIT model
 class MaskGit(nn.Module):
@@ -21,7 +21,7 @@ class MaskGit(nn.Module):
         self.transformer = BidirectionalTransformer(configs['Transformer_param']) # 輸出 n_token, code_book_vector，為其屬於某個vector的分數
 
     def load_transformer_checkpoint(self, load_ckpt_path):
-        self.transformer.load_state_dict(torch.load(load_ckpt_path))
+        self.transformer.load_state_dict(torch.load(load_ckpt_path)['transformer_parameter'])
 
     @staticmethod
     def load_vqgan(configs):
@@ -52,16 +52,13 @@ class MaskGit(nn.Module):
         Returns: The mask rate (float).
 
         """
-        return
+        # 要讓gamma(0) = 1, gamma(1) = 0
         if mode == "linear":
-            raise Exception('TODO2 step1-2!')
-            return None
+            return lambda ratio : 1 - ratio # 輸入ratio，輸出1-ratio
         elif mode == "cosine":
-            raise Exception('TODO2 step1-2!')
-            return None
+            return lambda ratio : np.cos(ratio * np.pi/2) # 在0~pi/2漸小
         elif mode == "square":
-            raise Exception('TODO2 step1-2!')
-            return None
+            return lambda ratio : 1 - ratio ** 2
         else:
             raise NotImplementedError
 
@@ -78,28 +75,36 @@ class MaskGit(nn.Module):
     
 ##TODO3 step1-1: define one iteration decoding   
     @torch.no_grad()
-    def inpainting(self): # for inference
-        raise Exception('TODO3 step1-1!')
-        logits = self.transformer(None)
+    def inpainting(self, z_indices, mask_b, ratio, mask_num): # for inference
+
+        mask = torch.ones(z_indices.shape).type(torch.LongTensor).to(z_indices.device) * self.mask_token_id # 整張都是mask token的圖
+        z_indices = mask_b * mask + (~mask_b) * z_indices
+        ramaining_mask_num = torch.floor(mask_num * self.gamma(ratio))
+
+        logits = self.transformer(z_indices)
         #Apply softmax to convert logits into a probability distribution across the last dimension.
-        logits = None
-
+        prob = F.softmax(logits, dim=-1)
+        
         #FIND MAX probability for each token value
-        z_indices_predict_prob, z_indices_predict = None
+        z_indices_predict_prob, z_indices_predict = torch.max(prob, dim=-1) # 產出機率跟對應的類
+        z_indices_predict = mask_b * z_indices_predict + (~mask_b) * z_indices
 
-        ratio=None 
         #predicted probabilities add temperature annealing gumbel noise as confidence
-        g = None  # gumbel noise
-        temperature = self.choice_temperature * (1 - ratio)
-        confidence = z_indices_predict_prob + temperature * g
+        g =  torch.distributions.gumbel.Gumbel(0, 1).sample(z_indices_predict_prob.shape).to(z_indices.device)  # gumbel noise
+        temperature = self.choice_temperature * (1 - self.gamma(ratio))
+        confidence = z_indices_predict_prob + temperature * g # (1,256)
+        confidence[(~mask_b)] = 1e9
+        sorted_confidence = torch.sort(confidence, dim=-1)[0] # 由小到大,(batch,n_token)
+        threshold = sorted_confidence[:,ramaining_mask_num.long()] # 0~ramaining_mask_num-1, 機率最小的幾個
+        ret_mask = confidence < threshold
         
         #hint: If mask is False, the probability should be set to infinity, so that the tokens are not affected by the transformer's prediction
         #sort the confidence for the rank 
         #define how much the iteration remain predicted tokens by mask scheduling
         #At the end of the decoding process, add back the original token values that were not masked to the predicted tokens
-        mask_bc=None
-        return z_indices_predict, mask_bc
-    
+
+        return z_indices_predict, ret_mask
+        
 __MODEL_TYPE__ = {
     "MaskGit": MaskGit
 }

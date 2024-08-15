@@ -11,3 +11,7 @@ model_weight
 cat_face
 checkpoints
 transformer_checkpoints
+test_results
+imga
+mask_scheduling
+ckeckpoints_saved

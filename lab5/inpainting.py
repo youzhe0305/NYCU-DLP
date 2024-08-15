@@ -30,8 +30,9 @@ class MaskGIT:
         os.makedirs("imga", exist_ok=True)
 
 ##TODO3 step1-1: total iteration decoding  
-#mask_b: iteration decoding initial mask, where mask_b is true means mask
+#mask_b: iteration decoding initial mask, where mask_b is true means mask 初始的mask(圖片缺的部分)，是bool的
     def inpainting(self,image,mask_b,i): #MakGIT inference
+        # image: (1,3,64,64), mask_b: (1,256)
         maska = torch.zeros(self.total_iter, 3, 16, 16) #save all iterations of masks in latent domain
         imga = torch.zeros(self.total_iter+1, 3, 64, 64)#save all iterations of decoded images
         mean = torch.tensor([0.4868, 0.4341, 0.3844],device=self.device).view(3, 1, 1)  
@@ -41,24 +42,23 @@ class MaskGIT:
 
         self.model.eval()
         with torch.no_grad():
-            z_indices = None #z_indices: masked tokens (b,16*16)
+
+            z_indices = self.model.encode_to_z(image) #z_indices: masked tokens (b,16*16)
             mask_num = mask_b.sum() #total number of mask token 
             z_indices_predict=z_indices
             mask_bc=mask_b
             mask_b=mask_b.to(device=self.device)
             mask_bc=mask_bc.to(device=self.device)
             
-            raise Exception('TODO3 step1-1!')
             ratio = 0
             #iterative decoding for loop design
             #Hint: it's better to save original mask and the updated mask by scheduling separately
             for step in range(self.total_iter):
                 if step == self.sweet_spot:
                     break
-                ratio = None #this should be updated
+                ratio = (step+1) / self.total_iter #this should be updated 從1開始 t/T
     
-                z_indices_predict, mask_bc = self.model.inpainting()
-
+                z_indices_predict, mask_bc = self.model.inpainting(z_indices, mask_b, ratio, mask_num)
                 #static method yon can modify or not, make sure your visualization results are correct
                 mask_i=mask_bc.view(1, 16, 16)
                 mask_image = torch.ones(3, 16, 16)
@@ -121,11 +121,11 @@ if __name__ == '__main__':
     
     
 #TODO3 step1-2: modify the path, MVTM parameters
-    parser.add_argument('--load-transformer-ckpt-path', type=str, default='', help='load ckpt')
+    parser.add_argument('--load-transformer-ckpt-path', type=str, default='./transformer_checkpoints/test_best.pt', help='load ckpt')
     
     #dataset path
     parser.add_argument('--test-maskedimage-path', type=str, default='./cat_face/masked_image', help='Path to testing image dataset.')
-    parser.add_argument('--test-mask-path', type=str, default='./mask64', help='Path to testing mask dataset.')
+    parser.add_argument('--test-mask-path', type=str, default='./cat_face/mask64', help='Path to testing mask dataset.')
     #MVTM parameter
     parser.add_argument('--sweet-spot', type=int, default=0, help='sweet spot: the best step in total iteration')
     parser.add_argument('--total-iter', type=int, default=0, help='total step for mask scheduling')
@@ -139,11 +139,12 @@ if __name__ == '__main__':
 
     i=0
     for image, mask in zip(t.mi_ori, t.mask_ori):
-        image=image.to(device=args.device)
-        mask=mask.to(device=args.device)
-        mask_b=t.get_mask_latent(mask)       
+        print(i)
+        image=image.to(device=args.device) # (1,3,64,64)
+        mask=mask.to(device=args.device) # (1,3,64,64)
+        mask_b=t.get_mask_latent(mask) # (1,256) 
         maskgit.inpainting(image,mask_b,i)
         i+=1
         
 
-
+# python3 inpainting.py --load-transformer-ckpt-path ./transformer_checkpoints/validation_best.pt --total-iter 10 --sweet-spot 10

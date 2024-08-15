@@ -40,50 +40,53 @@ class TrainTransformer:
             if idx % args.accum_grad == 0:
                 self.optim.step()
                 self.optim.zero_grad()
-            progress_bar.set_description(f'Training, Epoch {ith_epoch}: averge loss: {total_loss.item() / iterations}', refresh=False)
+            progress_bar.set_description(f'Training, Epoch {ith_epoch}:', refresh=False)
             progress_bar.set_postfix({
+                'lr': f'{self.scheduler.get_last_lr()}',
                 'averge loss':f'{total_loss.item() / iterations}'
             }, refresh=False)
-            progress_bar.refresh()     
+            progress_bar.refresh()    
+        self.scheduler.step()
         return total_loss.item() / iterations
-        
+    
+    @torch.no_grad()   
     def eval_one_epoch(self, val_loader, args, ith_epoch):
         
         progress_bar = tqdm(val_loader)
         total_loss = torch.zeros(1).to(args.device)
         iterations = 0
         for idx, img in enumerate(progress_bar):
-
             img = img.to(args.device)
             logits, z_indices = self.model(img) # (b, n_token, n_codebook_vector), (b,h*w)
-            loss = F.cross_entropy(logits, z_indices.view(-1, logits.shape[-1]), z_indices.view(-1)) # input: (B,C) target: (N)
+            loss = F.cross_entropy(logits.view(-1, logits.shape[-1]), z_indices.view(-1)) # input: (B,C) target: (N)
             total_loss += loss
             iterations += 1
-            loss.backward()
-            progress_bar.set_description(f'Validation, Epoch {ith_epoch}: averge loss: {total_loss.item() / iterations}', refresh=False)
-            progress_bar.set_postfix({
+            progress_bar.set_description(f'Validation, Epoch {ith_epoch}:', refresh=False)
+            progress_bar.set_postfix({                
                 'averge loss':f'{total_loss.item() / iterations}'
             }, refresh=False)   
             progress_bar.refresh()     
-            return total_loss.item() / iterations
+        return total_loss.item() / iterations
 
     def configure_optimizers(self, args):
         optimizer = torch.optim.Adam(self.model.parameters(), lr=args.learning_rate)
-        scheduler = None
+        scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[10, 40], gamma=0.1)
         return optimizer,scheduler
 
     def save(self, path):
         torch.save({
-            "model_parameter": self.model.state_dict(),
-            "optimizer": self.optim.state_dict(),  
+            'transformer_parameter': self.model.transformer.state_dict(),
+            'optimizer': self.optim.state_dict(),  
+            'scheduler': self.scheduler.state_dict(),
         }, path)
         print(f"save ckpt to {path}")
 
     def load_checkpoint(self, args):
         if args.load_path != None:
             checkpoint = torch.load(args.load_path)
-            self.model.load_state_dict(checkpoint['model_parameter'], strict=True) 
+            self.model.transformer.load_state_dict(checkpoint['model_parameter'], strict=True) 
             self.optim.load_state_dict(checkpoint['optimizer'])
+            self.scheduler.load_state_dict(checkpoint['scheduler'])
 
 def set_seed(seed): # set the seed to ensure the result will be same
     random.seed(seed)
@@ -102,7 +105,7 @@ if __name__ == '__main__':
     parser.add_argument('--num_workers', type=int, default=4, help='Number of worker')
     parser.add_argument('--batch-size', type=int, default=10, help='Batch size for training.')
     parser.add_argument('--partial', type=float, default=1.0, help='Number of epochs to train (default: 50)')    
-    parser.add_argument('--accum-grad', type=int, default=10, help='Number for gradient accumulation.')
+    parser.add_argument('--accum_grad', type=int, default=10, help='Number for gradient accumulation.')
 
     #you can modify the hyperparameters 
     parser.add_argument('--epochs', type=int, default=0, help='Number of epochs to train.')
@@ -152,4 +155,5 @@ if __name__ == '__main__':
             train_transformer.save(f'{args.checkpoint_root}/train_best.pt')
         if validation_avg_loss < min_validation_loss:
             min_validation_loss = validation_avg_loss
-            train_transformer.save(f'{args.checkpoint_root}/test_best.pt')
+            train_transformer.save(f'{args.checkpoint_root}/validation_best.pt')
+    # python3 training_transformer.py --batch-size 10 --epochs 300 --learning-rate 0.0001 --accum_grad 10
