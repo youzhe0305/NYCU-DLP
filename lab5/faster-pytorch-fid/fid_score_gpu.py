@@ -382,3 +382,5 @@ parser.add_argument('--gtcsv-path', type=str, default="./test_gt.csv")
 
 if __name__ == '__main__':
     main()
+
+# python3 fid_score_gpu.py --predicted-path ../test_results --device cuda
