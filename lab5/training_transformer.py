@@ -70,7 +70,7 @@ class TrainTransformer:
 
     def configure_optimizers(self, args):
         optimizer = torch.optim.Adam(self.model.parameters(), lr=args.learning_rate)
-        scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[10, 40], gamma=0.1)
+        scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[2, 10], gamma=0.1)
         return optimizer,scheduler
 
     def save(self, path):
@@ -88,14 +88,15 @@ class TrainTransformer:
             self.optim.load_state_dict(checkpoint['optimizer'])
             self.scheduler.load_state_dict(checkpoint['scheduler'])
 
-def set_seed(seed): # set the seed to ensure the result will be same
+def set_seed(seed):
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
-    if torch.cuda.is_available():
-        torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
 
 if __name__ == '__main__':
+    set_seed(529)
     parser = argparse.ArgumentParser(description="MaskGIT")
     #TODO2:check your dataset path is correct 
     parser.add_argument('--train_d_path', type=str, default="./cat_face/train/", help='Training Dataset Path')
@@ -112,7 +113,7 @@ if __name__ == '__main__':
     parser.add_argument('--save_per_epoch', type=int, default=3, help='Save CKPT per ** epochs(defcault: 1)')
     parser.add_argument('--start-from-epoch', type=int, default=0, help='Number of epochs to train.')
     parser.add_argument('--ckpt-interval', type=int, default=0, help='Number of epochs to train')
-    parser.add_argument('--learning-rate', type=float, default=0.001, help='Learning rate.')
+    parser.add_argument('--learning-rate', type=float, default=0.0001, help='Learning rate.')
     parser.add_argument('--load_path', type=str, default=None, help='the path to load ckpt')
 
     parser.add_argument('--MaskGitConfig', type=str, default='config/MaskGit.yml', help='Configurations for TransformerVQGAN')
@@ -139,7 +140,7 @@ if __name__ == '__main__':
                                 shuffle=False)
     
 #TODO2 step1-5:
-    set_seed(529)
+
     train_transformer.load_checkpoint(args)
     
     min_training_loss = 1e9

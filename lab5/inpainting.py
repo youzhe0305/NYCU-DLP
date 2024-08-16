@@ -11,6 +11,7 @@ import os
 from models import MaskGit as VQGANTransformer
 import yaml
 import torch.nn.functional as F
+import random
 
 class MaskGIT:
     def __init__(self, args, MaskGit_CONFIGS):
@@ -31,7 +32,7 @@ class MaskGIT:
 
 ##TODO3 step1-1: total iteration decoding  
 #mask_b: iteration decoding initial mask, where mask_b is true means mask 初始的mask(圖片缺的部分)，是bool的
-    def inpainting(self,image,mask_b,i): #MakGIT inference
+    def inpainting(self,image,mask_b,i,args): #MakGIT inference
         # image: (1,3,64,64), mask_b: (1,256)
         maska = torch.zeros(self.total_iter, 3, 16, 16) #save all iterations of masks in latent domain
         imga = torch.zeros(self.total_iter+1, 3, 64, 64)#save all iterations of decoded images
@@ -58,8 +59,9 @@ class MaskGIT:
                     break
                 ratio = (step+1) / self.total_iter #this should be updated 從1開始 t/T
     
-                z_indices_predict, mask_bc = self.model.inpainting(z_indices, mask_b, ratio, mask_num)
+                z_indices_predict, mask_bc = self.model.inpainting(z_indices, mask_b, ratio, mask_num, args.mask_func)
                 #static method yon can modify or not, make sure your visualization results are correct
+                mask_b = mask_bc
                 mask_i=mask_bc.view(1, 16, 16)
                 mask_image = torch.ones(3, 16, 16)
                 indices = torch.nonzero(mask_i, as_tuple=False)#label mask true
@@ -72,8 +74,10 @@ class MaskGIT:
                 dec_img_ori=(decoded_img[0]*std)+mean
                 imga[step+1]=dec_img_ori #get decoded image
 
-            ##decoded image of the sweet spot only, the test_results folder path will be the --predicted-path for fid score calculation
-            vutils.save_image(dec_img_ori, os.path.join("test_results", f"image_{i:03d}.png"), nrow=1) 
+                if not os.path.exists(os.path.join("test_results", f'iteration_{step+1}')):
+                    os.mkdir(os.path.join("test_results", f'iteration_{step+1}'))
+                ##decoded image of the sweet spot only, the test_results folder path will be the --predicted-path for fid score calculation
+                vutils.save_image(dec_img_ori, os.path.join("test_results", f'iteration_{step+1}', f"image_{i:03d}.png"), nrow=1) 
 
             #demo score 
             vutils.save_image(maska, os.path.join("mask_scheduling", f"test_{i}.png"), nrow=10) 
@@ -109,8 +113,15 @@ class MaskedImage:
         mask_b |= (mask_tokens == 0) #true means mask
         return mask_b
 
+def set_seed(seed):
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
 
 if __name__ == '__main__':
+    set_seed(529)
     parser = argparse.ArgumentParser(description="MaskGIT for Inpainting")
     parser.add_argument('--device', type=str, default="cuda", help='Which device the training is on.')#cuda
     parser.add_argument('--batch-size', type=int, default=1, help='Batch size for testing.')
@@ -129,7 +140,7 @@ if __name__ == '__main__':
     #MVTM parameter
     parser.add_argument('--sweet-spot', type=int, default=0, help='sweet spot: the best step in total iteration')
     parser.add_argument('--total-iter', type=int, default=0, help='total step for mask scheduling')
-    parser.add_argument('--mask-func', type=str, default='0', help='mask scheduling function')
+    parser.add_argument('--mask-func', type=str, default='cosin', help='mask scheduling function')
 
     args = parser.parse_args()
 
@@ -143,8 +154,10 @@ if __name__ == '__main__':
         image=image.to(device=args.device) # (1,3,64,64)
         mask=mask.to(device=args.device) # (1,3,64,64)
         mask_b=t.get_mask_latent(mask) # (1,256) 
-        maskgit.inpainting(image,mask_b,i)
+        maskgit.inpainting(image,mask_b,i,args)
         i+=1
         
 
-# python3 inpainting.py --load-transformer-ckpt-path ./transformer_checkpoints/validation_best.pt --total-iter 10 --sweet-spot 10
+# python3 inpainting.py --load-transformer-ckpt-path ./ckeckpoints_saved/test_best_1.770.pt --total-iter 30 --sweet-spot 21 
+# --mask-func linear
+# --mask-func square

@@ -58,7 +58,7 @@ class MaskGit(nn.Module):
         elif mode == "cosine":
             return lambda ratio : np.cos(ratio * np.pi/2) # 在0~pi/2漸小
         elif mode == "square":
-            return lambda ratio : 1 - ratio ** 2
+            return lambda ratio : 1 - ratio ** 0.5
         else:
             raise NotImplementedError
 
@@ -75,18 +75,21 @@ class MaskGit(nn.Module):
     
 ##TODO3 step1-1: define one iteration decoding   
     @torch.no_grad()
-    def inpainting(self, z_indices, mask_b, ratio, mask_num): # for inference
+    def inpainting(self, z_indices, mask_b, ratio, mask_num, gamma_mode): # for inference
 
+        self.gamma = self.gamma_func(mode = gamma_mode)
         mask = torch.ones(z_indices.shape).type(torch.LongTensor).to(z_indices.device) * self.mask_token_id # 整張都是mask token的圖
-        z_indices = mask_b * mask + (~mask_b) * z_indices
+        masked_z_indices = mask_b * mask + (~mask_b) * z_indices
         ramaining_mask_num = torch.floor(mask_num * self.gamma(ratio))
+        # print(mask_b.sum().item(), mask_num.item(), ramaining_mask_num.item(),self.gamma(ratio), ratio)
 
-        logits = self.transformer(z_indices)
+        logits = self.transformer(masked_z_indices)
         #Apply softmax to convert logits into a probability distribution across the last dimension.
-        prob = F.softmax(logits, dim=-1)
+        prob = F.softmax(logits, dim=-1) # 1,256,1025
         
         #FIND MAX probability for each token value
         z_indices_predict_prob, z_indices_predict = torch.max(prob, dim=-1) # 產出機率跟對應的類
+
         z_indices_predict = mask_b * z_indices_predict + (~mask_b) * z_indices
 
         #predicted probabilities add temperature annealing gumbel noise as confidence
@@ -97,7 +100,6 @@ class MaskGit(nn.Module):
         sorted_confidence = torch.sort(confidence, dim=-1)[0] # 由小到大,(batch,n_token)
         threshold = sorted_confidence[:,ramaining_mask_num.long()] # 0~ramaining_mask_num-1, 機率最小的幾個
         ret_mask = confidence < threshold
-        
         #hint: If mask is False, the probability should be set to infinity, so that the tokens are not affected by the transformer's prediction
         #sort the confidence for the rank 
         #define how much the iteration remain predicted tokens by mask scheduling

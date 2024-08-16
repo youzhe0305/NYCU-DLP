@@ -4,6 +4,8 @@ from torchvision import transforms
 from torchvision.datasets.folder import default_loader as imgloader
 import os
 import torch.nn as nn
+import matplotlib.pyplot as plt
+
 
 class LoadTrainData(torchData):
     """Training Dataset Loader
@@ -89,4 +91,3 @@ class LoadMaskData(torchData):
     def __getitem__(self, index):
         path = self.folder[index]
         return self.transform(imgloader(path))
-    

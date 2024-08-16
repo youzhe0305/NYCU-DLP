@@ -13,8 +13,8 @@ class Attention(nn.Module):
     def forward(self, Q, K, V):
         # Q,K,V: (batch, num_Head, n_token, d_k) or (batch, num_Head, n_token, d_v)
         dot_product = Q @ K.transpose(-2,-1) # (batch, n_token, n_token)
+        dot_product = self.dropout(dot_product)
         gate = torch.nn.functional.softmax(dot_product / (self.d_k ** -0.5), dim=-1) # 第i個query對所有的key的權重加總為1
-        gate = self.dropout(gate)
         attention = gate @ V # 權重*value，每一個row代表一個query的結果。 output: (batch, num_Head, n_token, d_v) 
         return attention
 
