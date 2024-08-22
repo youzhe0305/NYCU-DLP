@@ -1,6 +1,15 @@
 # NYCU-DLP
 Deep Learning and Practice class in National Yang Ming Chiao Tung University
 
-Dataset will not be include in github
+Lab1: Backpropagation only with Numpy
 
-lab2 dataset: BCI competition 2008–Graz data set a, (preprocessed by TA)
+LAB2: SCCNet for EEG Motor Imagery Classification
+
+LAB3: UNet for Binary Semantic Segmentation
+
+LAB4: Conditional VAE for Video Generation with skeleton condition
+
+LAB5: MaskGIT for picture inpainting
+
+LAB6: Conditional DDPM for Geometry Object Generation
+
