@@ -15,3 +15,6 @@ test_results
 imga
 mask_scheduling
 ckeckpoints_saved
+model_weight_best
+iclevr
+output
